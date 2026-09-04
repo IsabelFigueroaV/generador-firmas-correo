@@ -1,0 +1,15 @@
+Generador de firmas de correo — firmavf
+
+CONTENIDO
+- generador-firmas.html : la aplicación. Ábrala con doble clic en su navegador.
+- codigo-fuente/        : el código separado (motor, interfaz, estilos y tests).
+
+USO
+1. Abra generador-firmas.html.
+2. Complete los campos (las indicaciones son solo ejemplos y desaparecen al escribir).
+3. Cargue foto/logo si desea (se optimizan solos; la foto se recorta a cuadrado).
+4. Elija plantilla y color. Botón "Copiar firma" o "Descargar HTML".
+
+PRUEBAS (requiere Node.js, dentro de codigo-fuente/)
+- node test_firma.mjs
+- node test_ui.mjs

@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generador de firmas de correo</title>
+  <style>
+:root {
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --ink: #1f2733;
+  --muted: #5b6573;
+  --line: #d9dde4;
+  --accent: #155e75;
+  --accent-ink: #0b4252;
+  --danger: #9a2b2b;
+  --ok: #1f7a4d;
+  --focus: #1d6fb8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+header.app-bar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 22px;
+}
+header.app-bar h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+header.app-bar p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
+  padding: 20px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+}
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.field { margin-bottom: 12px; }
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.field input[type="text"],
+.field input[type="email"],
+.field input[type="url"],
+.field input[type="tel"],
+.field select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff;
+}
+.field input:focus,
+.field select:focus,
+button:focus,
+.chip:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+.field .hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.field .err {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 3px;
+  display: none;
+}
+.field.invalid input { border-color: var(--danger); }
+.field.invalid .err { display: block; }
+
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.opt-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.color-row { display: flex; align-items: center; gap: 10px; }
+.color-row input[type="color"] {
+  width: 44px; height: 34px; border: 1px solid var(--line);
+  border-radius: 6px; padding: 0; background: #fff; cursor: pointer;
+}
+
+.btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+button.btn {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+button.btn:hover { background: var(--accent-ink); }
+button.btn.secondary {
+  background: #fff; color: var(--accent);
+}
+button.btn.secondary:hover { background: #eef5f8; }
+button.btn.ghost {
+  background: #fff; color: var(--muted); border-color: var(--line);
+}
+button.btn.ghost:hover { background: #f1f2f4; }
+
+.preview-wrap { position: sticky; top: 20px; }
+.preview-frame {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 22px;
+  background: #fff;
+  overflow: auto;
+}
+.preview-frame.dark {
+  background: #1b1b1b;
+  border-color: #333;
+}
+.preview-toolbar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin-bottom: 12px;
+}
+.preview-toolbar .spacer { flex: 1; }
+
+.status {
+  margin-top: 10px;
+  font-size: 13px;
+  min-height: 18px;
+}
+.status.ok { color: var(--ok); }
+.status.err { color: var(--danger); }
+
+details.code-block { margin-top: 14px; }
+details.code-block summary {
+  cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted);
+}
+textarea.code {
+  width: 100%; min-height: 150px; margin-top: 8px;
+  font-family: "Consolas", "Menlo", monospace; font-size: 12px;
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px;
+  white-space: pre; overflow: auto;
+}
+
+.profiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.profile-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 5px 8px; font-size: 13px; background: #fff;
+}
+.profile-pill button {
+  border: none; background: none; cursor: pointer; font-size: 13px;
+  color: var(--accent); padding: 0 2px;
+}
+.profile-pill button.del { color: var(--danger); }
+
+.thumb {
+  margin-top: 6px; max-height: 70px; border: 1px solid var(--line);
+  border-radius: 6px; display: none;
+}
+.note {
+  font-size: 12px; color: var(--muted); margin-top: 14px;
+  border-top: 1px solid var(--line); padding-top: 10px;
+}
+
+</style>
+</head>
+<body>
+  <header class="app-bar">
+    <h1>Generador de firmas de correo</h1>
+    <p>Herramienta local. Genera firmas HTML compatibles con Outlook, Gmail, móvil y modo oscuro.</p>
+  </header>
+
+  <main class="layout">
+    <!-- Columna izquierda: formulario -->
+    <section class="panel" aria-label="Datos de la firma">
+      <h2>Datos</h2>
+
+      <div class="field">
+        <label for="name">Nombre <span aria-hidden="true">*</span></label>
+        <input type="text" id="name" autocomplete="name" required placeholder="Nombre Apellido">
+        <div class="err" id="name-err" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label for="title">Cargo</label>
+        <input type="text" id="title" autocomplete="organization-title" placeholder="Ej.: Subdirección / Jefatura / Cargo">
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="company">Empresa</label>
+          <input type="text" id="company" autocomplete="organization" placeholder="Ej.: Hospital Claudio Vicuña">
+        </div>
+        <div class="field">
+          <label for="area">Área / unidad</label>
+          <input type="text" id="area" placeholder="Ej.: Selección de Personal">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Correo</label>
+        <input type="email" id="email" autocomplete="email" placeholder="nombre@empresa.cl">
+        <div class="err" id="email-err" role="alert"></div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="phone">Teléfono</label>
+          <input type="tel" id="phone" autocomplete="tel" placeholder="+56 9 0000 0000">
+        </div>
+        <div class="field">
+          <label for="website">Sitio web</label>
+          <input type="text" id="website" placeholder="www.empresa.cl">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="linkedin">LinkedIn</label>
+        <input type="text" id="linkedin" placeholder="linkedin.com/in/usuario">
+      </div>
+
+      <div class="field">
+        <label for="address">Dirección</label>
+        <input type="text" id="address" placeholder="Ej.: San Antonio, Chile">
+        <div class="hint">Se omite en la firma breve.</div>
+      </div>
+
+      <h2 style="margin-top:18px;">Imágenes</h2>
+      <div class="field">
+        <label for="photo">Fotografía (circular)</label>
+        <input type="file" id="photo" accept="image/*">
+        <div class="hint">Cualquier tamaño: se optimiza automáticamente para mantener la firma liviana.</div>
+        <img id="photoThumb" class="thumb" alt="Vista previa de la fotografía">
+        <div class="btns"><button type="button" class="btn ghost" id="photoClear">Quitar foto</button></div>
+      </div>
+      <div class="field">
+        <label for="logo">Logotipo corporativo</label>
+        <input type="file" id="logo" accept="image/*">
+        <div class="hint">Use solo logotipos autorizados. Cualquier tamaño: se optimiza automáticamente.</div>
+        <img id="logoThumb" class="thumb" alt="Vista previa del logotipo">
+        <div class="btns"><button type="button" class="btn ghost" id="logoClear">Quitar logo</button></div>
+      </div>
+    </section>
+
+    <!-- Columna derecha: opciones + vista previa -->
+    <section class="preview-wrap">
+      <div class="panel">
+        <h2>Plantilla</h2>
+        <div class="opt-row" role="group" aria-label="Plantilla de firma">
+          <button type="button" class="chip" data-template="executive" aria-pressed="true">Ejecutiva</button>
+          <button type="button" class="chip" data-template="minimal" aria-pressed="false">Minimal</button>
+          <button type="button" class="chip" data-template="card" aria-pressed="false">Tarjeta</button>
+        </div>
+
+        <h2>Opciones</h2>
+        <div class="opt-row">
+          <button type="button" class="chip" id="shortToggle" aria-pressed="false">Firma breve</button>
+        </div>
+
+        <h2>Color de marca</h2>
+        <div class="color-row">
+          <input type="color" id="colorPicker" value="#155e75" aria-label="Selector de color de marca">
+          <input type="text" id="colorHex" value="#155e75" aria-label="Color en hexadecimal" style="max-width:120px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;">
+        </div>
+
+        <h2 style="margin-top:18px;">Perfiles</h2>
+        <div class="btns">
+          <button type="button" class="btn secondary" id="saveProfileBtn">Guardar perfil</button>
+        </div>
+        <div class="profiles" id="profiles"></div>
+      </div>
+
+      <div class="panel" style="margin-top:20px;">
+        <div class="preview-toolbar">
+          <h2 style="margin:0;">Vista previa</h2>
+          <span class="spacer"></span>
+          <button type="button" class="chip" id="darkToggle" aria-pressed="false">Modo oscuro</button>
+        </div>
+        <div class="preview-frame" id="previewFrame">
+          <div id="preview"></div>
+        </div>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <div class="btns">
+          <button type="button" class="btn" id="copyBtn">Copiar firma</button>
+          <button type="button" class="btn secondary" id="downloadBtn">Descargar HTML</button>
+        </div>
+
+        <details class="code-block">
+          <summary>Ver código HTML de la firma</summary>
+          <textarea class="code" id="htmlCode" readonly aria-label="Código HTML de la firma"></textarea>
+        </details>
+        <details class="code-block">
+          <summary>Ver versión de texto plano</summary>
+          <textarea class="code" id="textCode" readonly aria-label="Versión de texto plano"></textarea>
+        </details>
+
+        <p class="note">
+          Los perfiles se guardan en este navegador y equipo (localStorage); pueden borrarse y no se sincronizan.
+          Las imágenes se procesan localmente y no se envían a ningún servidor.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+/* signature-engine.js
+ * Motor de generación de firmas de correo. Lógica pura, sin DOM.
+ * Salida conservadora: tablas, estilos inline, bgcolor + <font color>,
+ * iconos Unicode seguros, mso-line-height-rule. Compatible con
+ * Outlook Desktop (motor Word), Outlook Web, Gmail, dark mode y móvil.
+ * Funciona en Node (module.exports) y navegador (window.SignatureEngine).
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === "object" && module.exports) module.exports = api;
+  else root.SignatureEngine = api;
+})(typeof self !== "undefined" ? self : this, function () {
+  "use strict";
+
+  // Cadena de respaldo amplia para clientes de correo.
+  const FONT_STACK = "'Aptos','Segoe UI',Arial,Helvetica,sans-serif";
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function escapeAttr(value) {
+    return escapeHtml(value);
+  }
+
+  // Normaliza un teléfono a formato tel: (solo dígitos y +).
+  function telHref(phone) {
+    const cleaned = String(phone || "").replace(/[^\d+]/g, "");
+    return cleaned;
+  }
+
+  // Normaliza una URL para href (agrega https:// si falta esquema).
+  function normalizeUrl(url) {
+    const v = String(url || "").trim();
+    if (!v) return "";
+    if (/^https?:\/\//i.test(v)) return v;
+    return "https://" + v;
+  }
+
+  // Texto visible de una URL (sin esquema ni barra final).
+  function displayUrl(url) {
+    return String(url || "")
+      .trim()
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .replace(/\/$/, "");
+  }
+
+  /* makeIcon — celda de icono compatible con Outlook Desktop y dark mode.
+   * Usa <table><td bgcolor> + <font color> + carácter Unicode seguro. */
+  function makeIcon(type, color) {
+    const c = escapeAttr(color || "#155e75");
+    const map = {
+      email: { sym: "&#9993;", fs: "11", fw: "normal" }, // ✉
+      phone: { sym: "&#9742;", fs: "11", fw: "normal" }, // ☎
+      web: { sym: "&#8853;", fs: "12", fw: "bold" }, // ⊕
+      linkedin: { sym: "in", fs: "9", fw: "bold" },
+      location: { sym: "&#9678;", fs: "11", fw: "normal" }, // ◎
+    };
+    const cfg = map[type];
+    if (!cfg) return "";
+    return (
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="border-collapse:collapse;">' +
+      "<tr>" +
+      '<td bgcolor="' +
+      c +
+      '" width="18" height="18" align="center" valign="middle" ' +
+      'style="width:18px;height:18px;background-color:' +
+      c +
+      ";border-radius:3px;text-align:center;vertical-align:middle;" +
+      "line-height:18px;mso-line-height-rule:exactly;font-size:" +
+      cfg.fs +
+      "px;font-weight:" +
+      cfg.fw +
+      ";font-family:Arial,Helvetica,sans-serif;color:#ffffff;\">" +
+      '<font color="#ffffff" face="Arial,Helvetica,sans-serif" size="1">' +
+      cfg.sym +
+      "</font>" +
+      "</td>" +
+      "</tr>" +
+      "</table>"
+    );
+  }
+
+  // Fila de contacto: icono + enlace/texto. nowrap evita quiebre en celular.
+  function contactRow(iconType, color, innerHtml, nowrap) {
+    const nw = nowrap
+      ? ' nowrap="nowrap"'
+      : "";
+    const wsStyle = nowrap ? "white-space:nowrap;" : "";
+    return (
+      "<tr>" +
+      '<td valign="middle" style="padding:2px 8px 2px 0;vertical-align:middle;">' +
+      makeIcon(iconType, color) +
+      "</td>" +
+      '<td' + nw + ' valign="middle" style="padding:2px 0;vertical-align:middle;' +
+      wsStyle +
+      "font-family:" +
+      FONT_STACK +
+      ";font-size:11px;line-height:18px;color:#333333;\">" +
+      innerHtml +
+      "</td>" +
+      "</tr>"
+    );
+  }
+
+  function link(href, text, color, nowrap) {
+    // Solo el teléfono va nowrap; correo/web/linkedin deben poder quebrar
+    // en pantallas angostas (celular) para no desbordar la firma.
+    var ws = nowrap
+      ? "white-space:nowrap;"
+      : "word-break:break-word;overflow-wrap:break-word;";
+    return (
+      '<a href="' +
+      escapeAttr(href) +
+      '" style="color:' +
+      escapeAttr(color) +
+      ';text-decoration:none;' +
+      ws +
+      'font-family:' +
+      FONT_STACK +
+      ';font-size:11px;">' +
+      '<font color="' +
+      escapeAttr(color) +
+      '">' +
+      escapeHtml(text) +
+      "</font></a>"
+    );
+  }
+
+  // Construye las filas de contacto según los datos presentes.
+  function buildContactRows(d, color, opts) {
+    const rows = [];
+    const textColor = "#333333";
+    if (d.email) {
+      rows.push(
+        contactRow(
+          "email",
+          color,
+          link("mailto:" + d.email, d.email, textColor, false),
+          false
+        )
+      );
+    }
+    if (d.phone) {
+      rows.push(
+        contactRow(
+          "phone",
+          color,
+          link("tel:" + telHref(d.phone), d.phone, textColor, true),
+          true
+        )
+      );
+    }
+    if (d.website) {
+      rows.push(
+        contactRow(
+          "web",
+          color,
+          link(normalizeUrl(d.website), displayUrl(d.website), color, false),
+          false
+        )
+      );
+    }
+    if (d.linkedin) {
+      rows.push(
+        contactRow(
+          "linkedin",
+          color,
+          link(normalizeUrl(d.linkedin), displayUrl(d.linkedin), color, false),
+          false
+        )
+      );
+    }
+    if (d.address && !opts.short) {
+      rows.push(
+        contactRow(
+          "location",
+          color,
+          '<font color="' + textColor + '">' + escapeHtml(d.address) + "</font>",
+          false
+        )
+      );
+    }
+    return rows.join("");
+  }
+
+  // Bloque de identidad (nombre, cargo, empresa, área).
+  function identityBlock(d, color) {
+    let html =
+      '<div style="font-family:' +
+      FONT_STACK +
+      ';font-size:16px;line-height:20px;font-weight:bold;color:#1a1a1a;">' +
+      '<font color="#1a1a1a">' +
+      escapeHtml(d.name) +
+      "</font></div>";
+    if (d.title) {
+      html +=
+        '<div style="font-family:' +
+        FONT_STACK +
+        ';font-size:13px;line-height:18px;color:' +
+        escapeAttr(color) +
+        ';">' +
+        '<font color="' +
+        escapeAttr(color) +
+        '">' +
+        escapeHtml(d.title) +
+        "</font></div>";
+    }
+    const org = [d.company, d.area].filter(Boolean).map(escapeHtml).join(" — ");
+    if (org) {
+      html +=
+        '<div style="font-family:' +
+        FONT_STACK +
+        ';font-size:12px;line-height:18px;color:#555555;">' +
+        '<font color="#555555">' +
+        org +
+        "</font></div>";
+    }
+    return html;
+  }
+
+  function photoCell(d) {
+    if (!d.photo) return "";
+    const size = 88;
+    return (
+      '<td style="padding-right:14px;vertical-align:middle;" valign="middle">' +
+      '<img src="' +
+      escapeAttr(d.photo) +
+      '" width="' +
+      size +
+      '" height="' +
+      size +
+      '" alt="' +
+      escapeAttr(d.name || "Foto") +
+      '" style="display:block;border:0;width:' +
+      size +
+      "px;height:" +
+      size +
+      'px;border-radius:50%;object-fit:cover;">' +
+      "</td>"
+    );
+  }
+
+  function logoBlock(d) {
+    if (!d.logo) return "";
+    return (
+      '<div style="margin-top:8px;">' +
+      '<img src="' +
+      escapeAttr(d.logo) +
+      '" alt="' +
+      escapeAttr((d.company || "Logo") + " logo") +
+      '" height="34" style="display:block;border:0;height:34px;max-width:200px;">' +
+      "</div>"
+    );
+  }
+
+  // ── Plantilla executive: foto circular + borde izquierdo de color ──
+  function templateExecutive(d, color, opts) {
+    const photo = photoCell(d);
+    const dividerStyle = photo
+      ? "border-left:2px solid " + color + ";padding-left:14px;"
+      : "";
+    return (
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="border-collapse:collapse;font-family:' +
+      FONT_STACK +
+      ';">' +
+      "<tr>" +
+      photo +
+      '<td style="' +
+      dividerStyle +
+      'vertical-align:middle;" valign="middle">' +
+      identityBlock(d, color) +
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="border-collapse:collapse;margin-top:6px;">' +
+      buildContactRows(d, color, opts) +
+      "</table>" +
+      logoBlock(d) +
+      "</td>" +
+      "</tr>" +
+      "</table>"
+    );
+  }
+
+  // ── Plantilla minimal: solo borde izquierdo, sin foto ──
+  function templateMinimal(d, color, opts) {
+    return (
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="border-collapse:collapse;font-family:' +
+      FONT_STACK +
+      ';">' +
+      "<tr>" +
+      '<td bgcolor="' +
+      escapeAttr(color) +
+      '" width="3" style="width:3px;background-color:' +
+      escapeAttr(color) +
+      ';font-size:0;line-height:0;">&nbsp;</td>' +
+      '<td style="padding-left:12px;vertical-align:middle;" valign="middle">' +
+      identityBlock(d, color) +
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="border-collapse:collapse;margin-top:6px;">' +
+      buildContactRows(d, color, opts) +
+      "</table>" +
+      logoBlock(d) +
+      "</td>" +
+      "</tr>" +
+      "</table>"
+    );
+  }
+
+  // ── Plantilla card: marco con borde superior de color ──
+  function templateCard(d, color, opts) {
+    return (
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="border-collapse:collapse;font-family:' +
+      FONT_STACK +
+      ";border:1px solid #e2e2e2;\">" +
+      "<tr>" +
+      '<td bgcolor="' +
+      escapeAttr(color) +
+      '" height="4" style="height:4px;background-color:' +
+      escapeAttr(color) +
+      ';font-size:0;line-height:0;">&nbsp;</td>' +
+      "</tr>" +
+      "<tr>" +
+      '<td style="padding:14px 16px;vertical-align:top;">' +
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">' +
+      "<tr>" +
+      photoCell(d) +
+      '<td valign="middle" style="vertical-align:middle;">' +
+      identityBlock(d, color) +
+      "</td>" +
+      "</tr>" +
+      "</table>" +
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="border-collapse:collapse;margin-top:8px;">' +
+      buildContactRows(d, color, opts) +
+      "</table>" +
+      logoBlock(d) +
+      "</td>" +
+      "</tr>" +
+      "</table>"
+    );
+  }
+
+  const TEMPLATES = {
+    executive: templateExecutive,
+    minimal: templateMinimal,
+    card: templateCard,
+  };
+
+  // Versión de texto plano de la firma.
+  function buildPlainText(d, opts) {
+    const lines = [];
+    if (d.name) lines.push(d.name);
+    if (d.title) lines.push(d.title);
+    const org = [d.company, d.area].filter(Boolean).join(" — ");
+    if (org) lines.push(org);
+    if (d.email) lines.push("Email: " + d.email);
+    if (d.phone) lines.push("Tel: " + d.phone);
+    if (d.website) lines.push("Web: " + displayUrl(d.website));
+    if (d.linkedin) lines.push("LinkedIn: " + displayUrl(d.linkedin));
+    if (d.address && !opts.short) lines.push(d.address);
+    return lines.join("\n");
+  }
+
+  /* buildSignature(data, options)
+   * options.template: "executive" | "minimal" | "card"
+   * options.color: color de marca (hex)
+   * options.short: firma breve (omite dirección)
+   * Devuelve { html, text }. */
+  function buildSignature(data, options) {
+    const d = data || {};
+    const opts = options || {};
+    if (!d.name || !String(d.name).trim()) {
+      throw new Error("El nombre es obligatorio.");
+    }
+    const color = opts.color || "#155e75";
+    const tpl = TEMPLATES[opts.template] || TEMPLATES.executive;
+    return {
+      html: tpl(d, color, opts),
+      text: buildPlainText(d, opts),
+    };
+  }
+
+  return {
+    FONT_STACK,
+    escapeHtml,
+    makeIcon,
+    normalizeUrl,
+    displayUrl,
+    telHref,
+    buildSignature,
+    buildPlainText,
+    templates: Object.keys(TEMPLATES),
+  };
+});
+
+</script>
+  <script>
+/* app.js — Glue de interfaz. Usa SignatureEngine (lógica pura).
+ * Sin dependencias externas. Persistencia en localStorage. */
+(function () {
+  "use strict";
+  var E = window.SignatureEngine;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var state = {
+    template: "executive",
+    color: "#155e75",
+    short: false,
+    dark: false,
+    photo: "",
+    logo: "",
+  };
+
+  var PROFILE_KEY = "firma_profiles";
+  var MAX_SRC_BYTES = 12 * 1024 * 1024; // guarda: no leer originales enormes (12 MB)
+  var MAX_DIM = { photo: 320, logo: 480 }; // lado máximo tras optimizar (px)
+
+  // ── Lectura/escritura del formulario ──
+  var FIELDS = ["name", "title", "company", "area", "email", "phone", "website", "linkedin", "address"];
+
+  function getData() {
+    var d = {};
+    FIELDS.forEach(function (f) { d[f] = $(f).value.trim(); });
+    d.photo = state.photo;
+    d.logo = state.logo;
+    return d;
+  }
+
+  function setData(d) {
+    d = d || {};
+    FIELDS.forEach(function (f) { $(f).value = d[f] || ""; });
+    state.photo = d.photo || "";
+    state.logo = d.logo || "";
+    refreshThumb("photo", state.photo);
+    refreshThumb("logo", state.logo);
+  }
+
+  // ── Validación de campos ──
+  function validate(d) {
+    var errs = {};
+    if (!d.name) errs.name = "El nombre es obligatorio.";
+    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email))
+      errs.email = "Correo no válido.";
+    return errs;
+  }
+
+  function applyValidation(errs) {
+    ["name", "email"].forEach(function (f) {
+      var wrap = $(f).closest(".field");
+      if (errs[f]) {
+        wrap.classList.add("invalid");
+        $(f + "-err").textContent = errs[f];
+      } else {
+        wrap.classList.remove("invalid");
+      }
+    });
+  }
+
+  // ── Render de vista previa ──
+  function render() {
+    var d = getData();
+    var errs = validate(d);
+    applyValidation(errs);
+    var preview = $("preview");
+    if (errs.name) {
+      preview.innerHTML =
+        '<p style="color:#9a2b2b;font-size:13px;margin:0;">Ingrese al menos el nombre para ver la firma.</p>';
+      $("htmlCode").value = "";
+      $("textCode").value = "";
+      return;
+    }
+    var result;
+    try {
+      result = E.buildSignature(d, {
+        template: state.template,
+        color: state.color,
+        short: state.short,
+      });
+    } catch (e) {
+      preview.innerHTML = '<p style="color:#9a2b2b;">' + e.message + "</p>";
+      return;
+    }
+    preview.innerHTML = result.html;
+    $("htmlCode").value = result.html;
+    $("textCode").value = result.text;
+  }
+
+  // ── Imágenes (foto/logo) → base64 local ──
+  function handleImage(inputId, slot) {
+    var input = $(inputId);
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      setStatus("El archivo no es una imagen.", "err");
+      input.value = "";
+      return;
+    }
+    if (file.size > MAX_SRC_BYTES) {
+      setStatus("La imagen supera 12 MB. Use una más liviana.", "err");
+      input.value = "";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var square = slot === "photo"; // la foto se recorta a cuadrado
+      optimizeImage(ev.target.result, MAX_DIM[slot] || 360, square, function (optimized, info) {
+        state[slot] = optimized;
+        refreshThumb(slot, state[slot]);
+        render();
+        setStatus(
+          (slot === "photo" ? "Foto" : "Logo") + " cargada y optimizada (" + info + ").",
+          "ok"
+        );
+      });
+    };
+    reader.onerror = function () { setStatus("No se pudo leer la imagen.", "err"); };
+    reader.readAsDataURL(file);
+  }
+
+  /* optimizeImage — redimensiona en canvas y comprime, manteniendo la firma
+   * liviana sin importar el tamaño original.
+   * square=true: recorta a cuadrado (centrado) para fotos de avatar, evitando
+   * distorsión en clientes sin object-fit (Outlook).
+   * PNG con transparencia se conserva como PNG; el resto pasa a JPEG. */
+  function optimizeImage(dataUrl, maxDim, square, cb) {
+    var img = new Image();
+    img.onload = function () {
+      var w = img.naturalWidth || img.width;
+      var h = img.naturalHeight || img.height;
+      if (!w || !h) { cb(dataUrl, "sin cambios"); return; }
+      var canvas = document.createElement("canvas");
+      var ctx, out, nw, nh;
+      if (square) {
+        var side = Math.min(w, h);
+        var sx = Math.round((w - side) / 2);
+        var sy = Math.round((h - side) / 2);
+        var outSide = Math.min(maxDim, side);
+        canvas.width = outSide; canvas.height = outSide;
+        ctx = canvas.getContext("2d");
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, outSide, outSide);
+        nw = outSide; nh = outSide;
+      } else {
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        nw = Math.max(1, Math.round(w * scale));
+        nh = Math.max(1, Math.round(h * scale));
+        canvas.width = nw; canvas.height = nh;
+        ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, nw, nh);
+      }
+      var isPng = /^data:image\/png/i.test(dataUrl);
+      try {
+        out = isPng
+          ? canvas.toDataURL("image/png")
+          : canvas.toDataURL("image/jpeg", 0.82);
+      } catch (e) {
+        cb(dataUrl, "sin cambios");
+        return;
+      }
+      // El recorte cuadrado siempre se conserva (corrige proporción).
+      // En el resto, si el original era más liviano, se conserva.
+      if (!square && out.length >= dataUrl.length) out = dataUrl;
+      var kb = Math.round((out.length * 3) / 4 / 1024);
+      cb(out, nw + "×" + nh + " px, ~" + kb + " KB");
+    };
+    img.onerror = function () { cb(dataUrl, "sin cambios"); };
+    img.src = dataUrl;
+  }
+
+  function refreshThumb(slot, src) {
+    var t = $(slot + "Thumb");
+    if (src) { t.src = src; t.style.display = "block"; }
+    else { t.removeAttribute("src"); t.style.display = "none"; }
+  }
+
+  function clearImage(slot) {
+    state[slot] = "";
+    $(slot).value = "";
+    refreshThumb(slot, "");
+    render();
+  }
+
+  // ── Estado / mensajes ──
+  var statusTimer = null;
+  function setStatus(msg, kind) {
+    var el = $("status");
+    el.textContent = msg;
+    el.className = "status " + (kind || "");
+    if (statusTimer) clearTimeout(statusTimer);
+    if (msg) statusTimer = setTimeout(function () { el.textContent = ""; el.className = "status"; }, 4000);
+  }
+
+  // ── Copiar firma (HTML enriquecido + texto plano) ──
+  function copySignature() {
+    var d = getData();
+    if (validate(d).name) { setStatus("Complete el nombre antes de copiar.", "err"); return; }
+    var html = $("htmlCode").value;
+    var text = $("textCode").value;
+    if (navigator.clipboard && window.ClipboardItem) {
+      var item = new ClipboardItem({
+        "text/html": new Blob([html], { type: "text/html" }),
+        "text/plain": new Blob([text], { type: "text/plain" }),
+      });
+      navigator.clipboard.write([item]).then(
+        function () { setStatus("Firma copiada (HTML enriquecido). Péguela en su cliente de correo.", "ok"); },
+        function () { copyFallback(); }
+      );
+    } else {
+      copyFallback();
+    }
+  }
+
+  // Alternativa cuando ClipboardItem no está disponible (ej. file://).
+  function copyFallback() {
+    var sel = window.getSelection();
+    var range = document.createRange();
+    range.selectNodeContents($("preview"));
+    sel.removeAllRanges();
+    sel.addRange(range);
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    if (ok) setStatus("Firma copiada desde la vista previa.", "ok");
+    else setStatus("No se pudo copiar automáticamente. Use 'Descargar HTML' o copie el código manualmente.", "err");
+  }
+
+  // ── Descargar HTML de la firma ──
+  function downloadHtml() {
+    var d = getData();
+    if (validate(d).name) { setStatus("Complete el nombre antes de descargar.", "err"); return; }
+    var doc =
+      "<!DOCTYPE html>\n<html lang=\"es\"><head><meta charset=\"utf-8\"></head><body>\n" +
+      $("htmlCode").value +
+      "\n</body></html>\n";
+    var blob = new Blob([doc], { type: "text/html;charset=utf-8" });
+    var safe = (d.name || "firma").replace(/[^\w\-]+/g, "_");
+    triggerDownload(blob, "firma_" + safe + ".html");
+    setStatus("Archivo de firma descargado.", "ok");
+  }
+
+  function triggerDownload(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  // ── Perfiles (localStorage) ──
+  function loadProfiles() {
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}"); }
+    catch (e) { return {}; }
+  }
+  function saveProfiles(p) {
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); return true; }
+    catch (e) { return false; }
+  }
+
+  function currentProfileData() {
+    var d = getData();
+    d.template = state.template;
+    d.color = state.color;
+    d.short = state.short;
+    return d;
+  }
+
+  function saveProfile() {
+    var d = getData();
+    if (validate(d).name) { setStatus("Complete el nombre antes de guardar el perfil.", "err"); return; }
+    var name = prompt("Nombre del perfil:", d.name);
+    if (!name) return;
+    var p = loadProfiles();
+    if (p[name] && !confirm("Ya existe un perfil '" + name + "'. ¿Reemplazar?")) return;
+    p[name] = currentProfileData();
+    if (saveProfiles(p)) { renderProfiles(); setStatus("Perfil '" + name + "' guardado.", "ok"); }
+    else setStatus("No se pudo guardar (almacenamiento no disponible).", "err");
+  }
+
+  function applyProfile(name) {
+    var p = loadProfiles();
+    var d = p[name];
+    if (!d) return;
+    setData(d);
+    state.template = d.template || "executive";
+    state.color = d.color || "#155e75";
+    state.short = !!d.short;
+    syncControls();
+    render();
+    setStatus("Perfil '" + name + "' cargado.", "ok");
+  }
+
+  function deleteProfile(name) {
+    if (!confirm("¿Eliminar el perfil '" + name + "'? Esta acción no se puede deshacer.")) return;
+    var p = loadProfiles();
+    delete p[name];
+    saveProfiles(p);
+    renderProfiles();
+    setStatus("Perfil '" + name + "' eliminado.", "ok");
+  }
+
+  function renderProfiles() {
+    var box = $("profiles");
+    var p = loadProfiles();
+    var names = Object.keys(p);
+    if (!names.length) {
+      box.innerHTML = '<span style="font-size:13px;color:#5b6573;">Sin perfiles guardados.</span>';
+      return;
+    }
+    box.innerHTML = "";
+    names.forEach(function (name) {
+      var pill = document.createElement("span");
+      pill.className = "profile-pill";
+      var label = document.createElement("span");
+      label.textContent = name;
+      var use = document.createElement("button");
+      use.type = "button"; use.textContent = "Usar";
+      use.addEventListener("click", function () { applyProfile(name); });
+      var del = document.createElement("button");
+      del.type = "button"; del.className = "del"; del.textContent = "✕";
+      del.setAttribute("aria-label", "Eliminar perfil " + name);
+      del.addEventListener("click", function () { deleteProfile(name); });
+      pill.appendChild(label); pill.appendChild(use); pill.appendChild(del);
+      box.appendChild(pill);
+    });
+  }
+
+  // ── Sincroniza controles visuales con el estado ──
+  function syncControls() {
+    document.querySelectorAll("[data-template]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-template") === state.template ? "true" : "false");
+    });
+    $("shortToggle").setAttribute("aria-pressed", state.short ? "true" : "false");
+    $("colorPicker").value = state.color;
+    $("colorHex").value = state.color;
+  }
+
+  // ── Inicialización ──
+  function init() {
+    // Eventos de campos
+    FIELDS.forEach(function (f) { $(f).addEventListener("input", render); });
+
+    // Plantillas
+    document.querySelectorAll("[data-template]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.template = b.getAttribute("data-template");
+        syncControls(); render();
+      });
+    });
+
+    // Firma breve
+    $("shortToggle").addEventListener("click", function () {
+      state.short = !state.short; syncControls(); render();
+    });
+
+    // Color
+    $("colorPicker").addEventListener("input", function () {
+      state.color = $("colorPicker").value; $("colorHex").value = state.color; render();
+    });
+    $("colorHex").addEventListener("input", function () {
+      var v = $("colorHex").value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { state.color = v; $("colorPicker").value = v; render(); }
+    });
+
+    // Imágenes
+    $("photo").addEventListener("change", function () { handleImage("photo", "photo"); });
+    $("logo").addEventListener("change", function () { handleImage("logo", "logo"); });
+    $("photoClear").addEventListener("click", function () { clearImage("photo"); });
+    $("logoClear").addEventListener("click", function () { clearImage("logo"); });
+
+    // Acciones
+    $("copyBtn").addEventListener("click", copySignature);
+    $("downloadBtn").addEventListener("click", downloadHtml);
+    $("saveProfileBtn").addEventListener("click", saveProfile);
+    $("darkToggle").addEventListener("click", function () {
+      state.dark = !state.dark;
+      $("previewFrame").classList.toggle("dark", state.dark);
+      $("darkToggle").setAttribute("aria-pressed", state.dark ? "true" : "false");
+    });
+
+    // Campos vacíos al iniciar; las indicaciones van como placeholder en el HTML.
+    syncControls();
+    renderProfiles();
+    render();
+  }
+
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+</script>
+</body>
+</html>

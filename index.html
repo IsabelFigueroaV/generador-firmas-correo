@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generador de firmas de correo</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <header class="app-bar">
+    <h1>Generador de firmas de correo</h1>
+    <p>Herramienta local. Genera firmas HTML compatibles con Outlook, Gmail, móvil y modo oscuro.</p>
+  </header>
+
+  <main class="layout">
+    <!-- Columna izquierda: formulario -->
+    <section class="panel" aria-label="Datos de la firma">
+      <h2>Datos</h2>
+
+      <div class="field">
+        <label for="name">Nombre <span aria-hidden="true">*</span></label>
+        <input type="text" id="name" autocomplete="name" required placeholder="Nombre Apellido">
+        <div class="err" id="name-err" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label for="title">Cargo</label>
+        <input type="text" id="title" autocomplete="organization-title" placeholder="Ej.: Subdirección / Jefatura / Cargo">
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="company">Empresa</label>
+          <input type="text" id="company" autocomplete="organization" placeholder="Ej.: Hospital Claudio Vicuña">
+        </div>
+        <div class="field">
+          <label for="area">Área / unidad</label>
+          <input type="text" id="area" placeholder="Ej.: Selección de Personal">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Correo</label>
+        <input type="email" id="email" autocomplete="email" placeholder="nombre@empresa.cl">
+        <div class="err" id="email-err" role="alert"></div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="phone">Teléfono</label>
+          <input type="tel" id="phone" autocomplete="tel" placeholder="+56 9 0000 0000">
+        </div>
+        <div class="field">
+          <label for="website">Sitio web</label>
+          <input type="text" id="website" placeholder="www.empresa.cl">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="linkedin">LinkedIn</label>
+        <input type="text" id="linkedin" placeholder="linkedin.com/in/usuario">
+      </div>
+
+      <div class="field">
+        <label for="address">Dirección</label>
+        <input type="text" id="address" placeholder="Ej.: San Antonio, Chile">
+        <div class="hint">Se omite en la firma breve.</div>
+      </div>
+
+      <h2 style="margin-top:18px;">Imágenes</h2>
+      <div class="field">
+        <label for="photo">Fotografía (circular)</label>
+        <input type="file" id="photo" accept="image/*">
+        <div class="hint">Cualquier tamaño: se optimiza automáticamente para mantener la firma liviana.</div>
+        <img id="photoThumb" class="thumb" alt="Vista previa de la fotografía">
+        <div class="btns"><button type="button" class="btn ghost" id="photoClear">Quitar foto</button></div>
+      </div>
+      <div class="field">
+        <label for="logo">Logotipo corporativo</label>
+        <input type="file" id="logo" accept="image/*">
+        <div class="hint">Use solo logotipos autorizados. Cualquier tamaño: se optimiza automáticamente.</div>
+        <img id="logoThumb" class="thumb" alt="Vista previa del logotipo">
+        <div class="btns"><button type="button" class="btn ghost" id="logoClear">Quitar logo</button></div>
+      </div>
+    </section>
+
+    <!-- Columna derecha: opciones + vista previa -->
+    <section class="preview-wrap">
+      <div class="panel">
+        <h2>Plantilla</h2>
+        <div class="opt-row" role="group" aria-label="Plantilla de firma">
+          <button type="button" class="chip" data-template="executive" aria-pressed="true">Ejecutiva</button>
+          <button type="button" class="chip" data-template="minimal" aria-pressed="false">Minimal</button>
+          <button type="button" class="chip" data-template="card" aria-pressed="false">Tarjeta</button>
+        </div>
+
+        <h2>Opciones</h2>
+        <div class="opt-row">
+          <button type="button" class="chip" id="shortToggle" aria-pressed="false">Firma breve</button>
+        </div>
+
+        <h2>Color de marca</h2>
+        <div class="color-row">
+          <input type="color" id="colorPicker" value="#155e75" aria-label="Selector de color de marca">
+          <input type="text" id="colorHex" value="#155e75" aria-label="Color en hexadecimal" style="max-width:120px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;">
+        </div>
+
+        <h2 style="margin-top:18px;">Perfiles</h2>
+        <div class="btns">
+          <button type="button" class="btn secondary" id="saveProfileBtn">Guardar perfil</button>
+        </div>
+        <div class="profiles" id="profiles"></div>
+      </div>
+
+      <div class="panel" style="margin-top:20px;">
+        <div class="preview-toolbar">
+          <h2 style="margin:0;">Vista previa</h2>
+          <span class="spacer"></span>
+          <button type="button" class="chip" id="darkToggle" aria-pressed="false">Modo oscuro</button>
+        </div>
+        <div class="preview-frame" id="previewFrame">
+          <div id="preview"></div>
+        </div>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <div class="btns">
+          <button type="button" class="btn" id="copyBtn">Copiar firma</button>
+          <button type="button" class="btn secondary" id="downloadBtn">Descargar HTML</button>
+        </div>
+
+        <details class="code-block">
+          <summary>Ver código HTML de la firma</summary>
+          <textarea class="code" id="htmlCode" readonly aria-label="Código HTML de la firma"></textarea>
+        </details>
+        <details class="code-block">
+          <summary>Ver versión de texto plano</summary>
+          <textarea class="code" id="textCode" readonly aria-label="Versión de texto plano"></textarea>
+        </details>
+
+        <p class="note">
+          Los perfiles se guardan en este navegador y equipo (localStorage); pueden borrarse y no se sincronizan.
+          Las imágenes se procesan localmente y no se envían a ningún servidor.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="signature-engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
